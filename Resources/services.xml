@@ -1,0 +1,12 @@
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+    <services>
+        <service id="trustpilot.subscriber.order_subscriber" class="trus2_Trustpilot_Reviews\Subscriber\OrderSubscriber">
+            <tag name="doctrine.event_subscriber"/>
+        </service>
+        <service id="trustpilot.past_orders" class="trus2_Trustpilot_Reviews\PastOrders" />
+        <service id="trustpilot.trustpilot_http_client" class="trus2_Trustpilot_Reviews\TrustpilotHttpClient" />
+        <service id="trustpilot.orders" class="trus2_Trustpilot_Reviews\Orders" />
+    </services>
+</container>

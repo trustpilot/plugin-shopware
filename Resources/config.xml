@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/shopware/5.3/engine/Shopware/Components/Plugin/schema/config.xsd">
+    <elements>
+        <element required="false" type="text" scope="shop">
+            <name>master_settings</name>
+            <label lang="de">CAREFUL HERE! Please don’t change the information in this table as it will break the integration</label>
+            <label lang="en">CAREFUL HERE! Please don’t change the information in this table as it will break the integration</label>
+            <value></value>
+            <description lang="de">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
+            <description lang="en">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
+        </element>
+         <element required="false" type="text" scope="shop">
+            <name>sync_in_progress</name>
+            <label lang="de">Sync in progress</label>
+            <label lang="en">Sync in progress</label>
+            <value></value>
+            <description lang="de">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
+            <description lang="en">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
+        </element>
+         <element required="false" type="text" scope="shop">
+            <name>show_past_orders_initial</name>
+            <label lang="de">Show past orders initial</label>
+            <label lang="en">Show past orders initial</label>
+            <value></value>
+            <description lang="de">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
+            <description lang="en">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
+        </element>
+         <element required="false" type="text" scope="shop">
+            <name>past_orders</name>
+            <label lang="de">Past orders</label>
+            <label lang="en">Past orders</label>
+            <value></value>
+            <description lang="de">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
+            <description lang="en">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
+        </element>
+         <element required="false" type="text" scope="shop">
+            <name>failed_orders</name>
+            <label lang="de">Failed orders</label>
+            <label lang="en">Failed orders</label>
+            <value></value>
+            <description lang="de">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
+            <description lang="en">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
+        </element>
+        <element required="false" type="text" scope="shop">
+            <name>custom_trustboxes</name>
+            <label lang="de">Custom Trustboxes</label>
+            <label lang="en">Custom Trustboxes</label>
+            <value></value>
+            <description lang="de">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
+            <description lang="en">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
+        </element>
+        <element required="false" type="text" scope="shop">
+            <name>page_urls</name>
+            <label lang="de">Page urls</label>
+            <label lang="en">Page urls</label>
+            <value></value>
+            <description lang="de">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
+            <description lang="en">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
+        </element>
+        <element required="false" type="text" scope="shop">
+            <name>total_orders</name>
+            <label lang="de">Total orders</label>
+            <label lang="en">Total orders</label>
+            <value></value>
+            <description lang="de">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
+            <description lang="en">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
+        </element>
+    </elements>
+</config>
