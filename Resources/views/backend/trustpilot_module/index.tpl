@@ -2,6 +2,19 @@
 {extends file="parent:backend/_base/layout.tpl"}
 
 {block name="content/main"}
+    <script type='text/javascript'>
+        function onTrustpilotIframeLoad() {
+            if (typeof sendSettings === 'function' && typeof sendPastOrdersInfo === 'function') {
+                sendSettings();
+                sendPastOrdersInfo();
+            } else {
+                window.addEventListener('load', function () {
+                    sendSettings();
+                    sendPastOrdersInfo();
+                });
+            }
+        }
+    </script>
     <div style='display:block;'>
         <iframe
             style='display: inline-block;'
@@ -23,7 +36,9 @@
             data-is-from-marketplace='{$isFromMarketplace}'
             data-configuration-scope-tree='{$configurationScopeTree}'
             data-shop='{$shop}'
-            onload='sendSettings();sendPastOrdersInfo();'>
+            data-plugin-status='{$pluginStatus}'
+            data-locale='{$locale}'
+            onload='onTrustpilotIframeLoad();'>
         </iframe>
     </div>
     <script>

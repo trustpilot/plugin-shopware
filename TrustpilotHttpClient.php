@@ -3,33 +3,41 @@
 namespace trus2_Trustpilot_Reviews;
 
 use Shopware;
+use Shopware\Models\Shop\Shop;
 
 include_once TP_PATH_ROOT . '/TrustpilotConfig.php';
 
 class TrustpilotHttpClient
 {
+    private $config = null;
+    private $pluginStatus = null;
+    private $apiUrl = null;
+
     const HTTP_REQUEST_TIMEOUT = 3;
 
     public function __construct()
     {
+        $this->pluginStatus = Shopware()->Container()->get('trustpilot.trustpilot_plugin_status');
         $this->config = \TrustpilotConfig::getInstance();
         $this->apiUrl = $this->config->apiUrl;
     }
 
-    public function post($url, $data)
+    public function post($url, $data, $origin)
     {
         $httpRequest = "POST";
 
-        $repository = Shopware()->Container()->get('models')->getRepository('Shopware\Models\Shop\Shop');
-        $shop = $repository->getActiveShops()[0];
-        $origin = ($shop->getSecure() ? 'https://' : 'http://') . $shop->getHost();
-
-        return $this->request(
+        $response = $this->request(
             $url,
             $httpRequest,
             $origin,
             $data
         );
+
+        if ($response['code'] > 250 && $response['code'] < 254) {
+            $this->pluginStatus->setPluginStatus($response);
+        }
+
+        return $response;
     }
 
     public function buildUrl($key, $endpoint)
@@ -37,14 +45,36 @@ class TrustpilotHttpClient
         return $this->apiUrl . $key . $endpoint;
     }
 
-    public function postInvitation($key, $data = array())
+    public function checkStatusAndPost($url, $shop, $data)
     {
-        return $this->post($this->buildUrl($key, '/invitation'), $data);
+        if (isset($shop)) {
+            $origin = ($shop->getSecure() ? 'https://' : 'http://') . $shop->getHost();
+        } else {
+            //TODO: this part used by past orders for now, but needs to be solved
+            $repository = Shopware()->Container()->get('models')->getRepository('Shopware\Models\Shop\Shop');
+            $shop = $repository->getActiveShops()[0];
+            $origin = ($shop->getSecure() ? 'https://' : 'http://') . $shop->getHost();
+        }
+
+        $code = $this->pluginStatus->checkPluginStatus($origin);
+        if ($code > 250 && $code < 254) {
+            return array(
+                'code' => $code,
+            );
+        }
+
+        return $this->post($url, $data, $origin);
     }
 
-    public function postBatchInvitations($key, $data = array())
+    public function postInvitation($key, Shop $shop, $data = array())
     {
-        return $this->post($this->buildUrl($key, '/batchinvitations'), $data);
+        return $this->checkStatusAndPost($this->buildUrl($key, '/invitation'), $shop, $data);
+    }
+
+    // TODO: get shop for past orders
+    public function postBatchInvitations($key, $data = array(), Shop $shop = null)
+    {
+        return $this->checkStatusAndPost($this->buildUrl($key, '/batchinvitations'), $shop, $data);
     }
 
     public function request($url, $httpRequest, $origin, $data = null, $params = array(), $timeout = self::HTTP_REQUEST_TIMEOUT)
@@ -72,7 +102,7 @@ class TrustpilotHttpClient
         if (function_exists('json_encode')) {
             return json_encode($data);
         } elseif (method_exists('Tools', 'jsonEncode')) {
-            return Tools::jsonEncode($data);
+            return \Tools::jsonEncode($data);
         }
     }
 
@@ -81,7 +111,7 @@ class TrustpilotHttpClient
         if (function_exists('json_decode')) {
             return json_decode($data);
         } elseif (method_exists('Tools', 'jsonDecode')) {
-            return Tools::jsonDecode($data);
+            return \Tools::jsonDecode($data);
         }
     }
 

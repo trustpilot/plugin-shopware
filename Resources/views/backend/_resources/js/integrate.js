@@ -13,6 +13,9 @@ function receiveSettings(e) {
         return receiveInternalData(e);
     }
     const data = e.data;
+    if (typeof data !== 'string') {
+        return;
+    }
     if (data.startsWith('sync:') || data.startsWith('showPastOrdersInitial:')) {
         const split = data.split(':');
         const action = {};
@@ -58,12 +61,13 @@ function submitPastOrdersCommand(data) {
 function sendPastOrdersInfo(data) {
     const iframe = document.getElementById('configuration_iframe');
     const attrs = iframe.dataset;
+    const targetOrigin = iframe.src;
 
     if (data === undefined) {
         data = attrs.pastOrders;
     }
 
-    iframe.contentWindow.postMessage(data, checkProtocol(attrs.transfer));
+    iframe.contentWindow.postMessage(data, targetOrigin);
 }
 
 function checkProtocol(url) {
@@ -78,6 +82,9 @@ function receiveInternalData(e) {
     const data = e.data;
     if (data && typeof data === 'string') {
         const jsonData = JSONParseSafe(data);
+        if (jsonData && jsonData.type === 'loadCategoryProductInfo') {
+            requestCategoryInfo();
+        }
         if (jsonData && jsonData.type === 'updatePageUrls') {
             submitSettings(jsonData);
         }
@@ -85,6 +92,24 @@ function receiveInternalData(e) {
             submitSettings(jsonData);
         }
     }
+}
+
+function requestCategoryInfo() {
+    const data = { type: 'get_category_product_info' };
+
+    const xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            if (xhr.status >= 400) {
+                console.log(`callback error: ${xhr.response} ${xhr.status}`);
+            } else {
+                window.postMessage(JSON.stringify(xhr.response), window.origin);
+            }
+        }
+    }
+    xhr.open('POST', ajaxurl, true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.send(encodeSettings(data));
 }
 
 function handleJSONMessage(data) {
@@ -141,6 +166,7 @@ function sendSettings() {
 
     const attrs = iframe.dataset;
     const settings = JSONParseSafe(atob(attrs.settings));
+    const targetOrigin = iframe.src;
 
     if (!settings.trustbox) {
         settings.trustbox = {}
@@ -155,7 +181,9 @@ function sendSettings() {
     settings.isFromMarketplace = attrs.isFromMarketplace;
     settings.customTrustBoxes = attrs.customTrustboxes;
     settings.configurationScopeTree = JSONParseSafe(atob(attrs.configurationScopeTree));
+    settings.pluginStatus = JSONParseSafe(atob(attrs.pluginStatus));
     settings.shop = attrs.shop;
+    settings.locale = attrs.locale;
 
     if (settings.trustbox.trustboxes && attrs.sku) {
         for (trustbox of settings.trustbox.trustboxes) {
@@ -169,5 +197,5 @@ function sendSettings() {
         }
     }
 
-    iframe.contentWindow.postMessage(JSON.stringify(settings), attrs.transfer);
+    iframe.contentWindow.postMessage(JSON.stringify(settings), targetOrigin);
 }

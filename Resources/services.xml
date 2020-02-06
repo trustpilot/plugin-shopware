@@ -8,5 +8,6 @@
         <service id="trustpilot.past_orders" class="trus2_Trustpilot_Reviews\PastOrders" />
         <service id="trustpilot.trustpilot_http_client" class="trus2_Trustpilot_Reviews\TrustpilotHttpClient" />
         <service id="trustpilot.orders" class="trus2_Trustpilot_Reviews\Orders" />
+        <service id="trustpilot.trustpilot_plugin_status" class="trus2_Trustpilot_Reviews\TrustpilotPluginStatus" />
     </services>
 </container>

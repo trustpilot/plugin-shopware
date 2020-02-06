@@ -4,13 +4,14 @@ namespace trus2_Trustpilot_Reviews;
 
 use Doctrine\DBAL\Connection;
 include_once TP_PATH_ROOT . '/TrustpilotConfig.php';
-define('WITH_PRODUCT_DATA', 'WITH_PRODUCT_DATA');
-define('WITHOUT_PRODUCT_DATA', 'WITHOUT_PRODUCT_DATA');
 define('PAST_ORDER_STATUSES', array(2, 7));
 define('BATCH_SIZE', 20);
 
 class PastOrders
 {
+    private $container = null;
+    private $config = null;
+    private $trustpilot_api = null;
 
     public function __construct()
     {
@@ -29,7 +30,7 @@ class PastOrders
             if (!is_null($key)) {
                 $this->config->writeConfig('past_orders', 0);
                 $pageId = 0;
-                $post_batch = $this->getOrdersForPeriod($period_in_days, $pageId);
+                $post_batch = $this->getOrdersForPeriod($period_in_days, $pageId, $collect_product_data);
                 while ($post_batch) {
                     set_time_limit(30);
                     $batch = null;
@@ -40,7 +41,7 @@ class PastOrders
                         $code = $this->handleTrustpilotResponse($response, $batch);
                         if ($code == 202) {
                             $collect_product_data = WITH_PRODUCT_DATA;
-                            $batch['invitations'] = $this->getOrdersForPeriod($period_in_days, $pageId);
+                            $batch['invitations'] = $this->getOrdersForPeriod($period_in_days, $pageId, $collect_product_data);
                             $batch['type'] = $collect_product_data;
                             $response = $this->trustpilot_api->postBatchInvitations($key, $batch);
                             $this->handleTrustpilotResponse($response, $batch);
@@ -50,13 +51,14 @@ class PastOrders
                             $this->config->writeConfig('sync_in_progress', 'false');
                             $this->config->writeConfig('past_orders', 0);
                             $this->config->writeConfig('failed_orders', '{}');
+                            return;
                         }
                     }
                     $pageId = $pageId + 1;
-                    $post_batch = $this->getOrdersForPeriod($period_in_days, $pageId);
+                    $post_batch = $this->getOrdersForPeriod($period_in_days, $pageId, $collect_product_data);
                 }
             }
-        } catch (Exception $e) { }
+        } catch (\Exception $e) { }
         $this->config->writeConfig('sync_in_progress', 'false');
         $this->config->writeConfig('total_orders', 0);
     }
@@ -102,7 +104,7 @@ class PastOrders
                     }
                 }
             }
-        } catch (Exception $e) { }
+        } catch (\Exception $e) { }
         $this->config->writeConfig('sync_in_progress', 'false');
         $this->config->writeConfig('total_orders', 0);
     }
@@ -121,7 +123,7 @@ class PastOrders
         $invitations = array();
         $trustpilot_orders = $this->container->get('trustpilot.orders');
         foreach ($result as $order) {
-            $invitation = $trustpilot_orders->getInvitation($order, 'past-orders');
+            $invitation = $trustpilot_orders->getInvitation($order, 'past-orders', $collect_product_data);
             if (!is_null($invitation)) {
                 array_push($invitations, $invitation);
             }
@@ -222,7 +224,7 @@ class PastOrders
         }
     }
 
-    private function getOrdersForPeriod($periodInDays, $page = 0) {
+    private function getOrdersForPeriod($periodInDays, $page = 0, $collect_product_data) {
         $builder = Shopware()->Models()->createQueryBuilder();
         $builder->select(array('orders', 'details', 'customer', 'billing', 'shipping'))
             ->from('Shopware\Models\Order\Order', 'orders')
@@ -242,7 +244,7 @@ class PastOrders
         $invitations = array();
         $trustpilot_orders = $this->container->get('trustpilot.orders');
         foreach ($result as $order) {
-            $invitation = $trustpilot_orders->getInvitation($order, 'past-orders');
+            $invitation = $trustpilot_orders->getInvitation($order, 'past-orders', $collect_product_data);
             if (!is_null($invitation)) {
                 array_push($invitations, $invitation);
             }
