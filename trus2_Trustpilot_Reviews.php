@@ -13,6 +13,7 @@ use Shopware\Components\Plugin\Context\ActivateContext;
 use Shopware\Components\Plugin\Context\DeactivateContext;
 use Shopware\Components\Plugin\Context\InstallContext;
 use Shopware\Components\Plugin\Context\UninstallContext;
+use Doctrine\ORM\AbstractQuery;
 
 if (!defined('TP_PATH_ROOT')) {
     define('TP_PATH_ROOT', dirname(__FILE__));
@@ -41,7 +42,7 @@ class trus2_Trustpilot_Reviews extends Plugin
     {
         $context->scheduleClearCache(UninstallContext::CACHE_LIST_ALL);
 
-        if($context->keepUserData()) {
+        if ($context->keepUserData()) {
             return;
         }
 
@@ -83,10 +84,20 @@ class trus2_Trustpilot_Reviews extends Plugin
             'Enlight_Controller_Action_Frontend_Detail_index' => 'onCheckout',
             'Enlight_Controller_Dispatcher_ControllerPath_Backend_TrustpilotModule' => 'onGetBackendController',
             'Enlight_Controller_Action_PostDispatch_Frontend_Checkout' => 'onFrontendPostDispatch',
+            'Shopware_Modules_Order_SaveOrder_ProcessDetails' => 'sendBackendInvitation',
             'Enlight_Controller_Action_PreDispatch_Frontend' => ['onFrontend',-100],
             'Enlight_Controller_Action_PostDispatchSecure_Frontend' => 'onFrontend',
-            'Enlight_Controller_Action_PostDispatch_Backend_Index' => 'onPostDispatchBackendIndex'
+            'Enlight_Controller_Action_PostDispatch_Backend_Index' => 'onPostDispatchBackendIndex',
+            'Theme_Inheritance_Template_Directories_Collected' => 'onCollectTemplateDir'
         ];
+    }
+
+    public function onCollectTemplateDir(\Enlight_Event_EventArgs $args)
+    {
+        $dirs = $args->getReturn();
+        $dirs[] = $this->getPath() . '/Resources/views';
+
+        $args->setReturn($dirs);
     }
 
     /**
@@ -121,6 +132,14 @@ class trus2_Trustpilot_Reviews extends Plugin
         $view->assign('language_iso', 'en');
     }
 
+    public function sendBackendInvitation(\Enlight_Event_EventArgs $args)
+    {
+        $orderId = $args->get('orderId');
+        $order = Shopware()->Models()->getRepository('Shopware\Models\Order\Order')->find($orderId);
+        $orders = Shopware()->Container()->get('trustpilot.orders');
+        $orders->sendInvitation($order);
+    }
+
     public function onFrontendPostDispatch(\Enlight_Event_EventArgs $args)
     {
         $controller = $args->getSubject();
@@ -133,34 +152,34 @@ class trus2_Trustpilot_Reviews extends Plugin
 
         $orders = Shopware()->Container()->get('trustpilot.orders');
         $order = Shopware()->Models()->getRepository('Shopware\Models\Order\Order')->findByNumber($sOrderVariables['sOrderNumber']);
-        if (isset($order[0])){
+
+        if (isset($order[0])) {
             $order = $order[0];
+            $shop = $order->getShop();
+            $pluginStatus = Shopware()->Container()->get('trustpilot.trustpilot_plugin_status');
+            $origin = ($shop->getSecure() ? 'https://' : 'http://') . $shop->getHost();
+            $code = $pluginStatus->checkPluginStatus($origin);
 
-            $invitation = $orders->getInvitation($order, 'shopware_thankyou');
+            if ($code > 250 && $code < 254) {
+                $view->assign('order', 'undefined');
+            } else {
+                $invitation = $orders->getInvitation($order, 'shopware_thankyou');
 
-            if (!in_array('trustpilotOrderConfirmed', $masterSettings->general->mappedInvitationTrigger)) {
-                $invitation['payloadType'] = 'OrderStatusUpdate';
+                if (!in_array('trustpilotOrderConfirmed', $masterSettings->general->mappedInvitationTrigger)) {
+                    $invitation['payloadType'] = 'OrderStatusUpdate';
+                }
+
+                try {
+                    /**
+                     * ROI data
+                     */
+                    $invitation['totalCost'] = strval($order->getInvoiceAmount());
+                    $invitation['currency'] = $order->getCurrency();
+                } catch (\Exception $ex) {}
+
+                $view->assign('order', json_encode($invitation));
             }
-
-            $this->sendBackendInvitation($masterSettings->general->key, $invitation);
-
-            try {
-                /**
-                 * ROI data
-                 */
-                $invitation['totalCost'] = strval($order->getInvoiceAmount());
-                $invitation['currency'] = $order->getCurrency();
-            } catch (Exception $ex) {}
-            $view->assign('order', json_encode($invitation));
         }
-    }
-
-    public function sendBackendInvitation($key, $invitation) {
-        try {
-            $httpClient = Shopware()->Container()->get('trustpilot.trustpilot_http_client');
-            $invitation['hook'] = 'shopware_order_status_changed';
-            $httpClient->postInvitation($key, $invitation);
-        } catch (\Exception $ex) {}
     }
 
     /**
@@ -168,6 +187,9 @@ class trus2_Trustpilot_Reviews extends Plugin
      */
     public function onGetBackendController()
     {
+        $this->container->get('Template')->addTemplateDir(
+            $this->getPath() . '/Resources/views/'
+        );
         return __DIR__ . '/Controllers/Backend/TrustpilotModule.php';
     }
 
@@ -183,13 +205,55 @@ class trus2_Trustpilot_Reviews extends Plugin
         );
         $masterSettings = $config->getConfig('master_settings');
         $view = $args->getSubject()->View();
+        $subject = $args->getSubject();
+        $productSku = '';
+        $trustbox = $masterSettings->trustbox;
+        $page = $this->getPageByController($subject->Request()->getControllerName());
+        if ($page == 'category' && $this->repeatData($trustbox->trustboxes)) {
+            $context = Shopware()->Container()->get('shopware_storefront.context_service')->getShopContext();
+            $shop = $context->getShop();
+
+            $orders = Shopware()->Container()->get('trustpilot.orders');
+            $trustbox->categoryProductsData = $orders->loadCategoryProductInfo($masterSettings, $view->getAssign('sArticles'), $shop);
+        } else if ($page == 'product') {
+            $productSku = $this->getProductSku($subject, $masterSettings->skuSelector);
+        }
         $view->assign(array(
-            'previewShopwareUrl'=> $config->preview_shopware_url . '/js/header_bigcommerce.js',
+            'previewShopwareUrl'=> $config->preview_shopware_url . '/js/header_bigcommerce.min.js',
             'widgetScriptUrl' => $config->widget_script_url,
-            'page' => $this->getPageByController($args->getSubject()->Request()->getControllerName()),
+            'page' => $page,
             'integrationKey' => $masterSettings->general->key,
-            'trustpilotTrustboxSettings' => json_encode($masterSettings->trustbox),
+            'trustpilotTrustboxSettings' => json_encode($trustbox),
+            'productSku' => $productSku,
         ));
+    }
+
+    private function getProductSku($subject, $skuSelector) {
+        try {
+            $productId = $subject->Request()->sArticle;
+            $skus = TRUSTPILOT_PRODUCT_ID_PREFIX . $productId;
+
+            $articleRepository = Shopware()->Container()->get('models')->getRepository('Shopware\Models\Article\Article');
+
+            $product = $articleRepository
+                ->getArticleBaseDataQuery($productId)
+                ->getOneOrNullResult(AbstractQuery::HYDRATE_OBJECT);
+
+            if (!empty($product)) {
+                $orders = Shopware()->Container()->get('trustpilot.orders');
+                $sku = $orders->getInventoryAttribute($skuSelector, $product->getMainDetail());
+                $skus  = $skus . ',' . $sku;
+            }
+            return $skus;
+        } catch (\Throwable $e) {
+            $message = 'Unable to get product skus for trustbox info.';
+            Shopware()->Container()->get('pluginlogger')->error($e, ['message' => $message]);
+            return '';
+        } catch (\Exception $e) {
+            $message = 'Unable to get product skus for trustbox info.';
+            Shopware()->Container()->get('pluginlogger')->error($e, ['message' => $message]);
+            return '';
+        }
     }
 
     private function getPageByController($controllerName) {
@@ -203,5 +267,14 @@ class trus2_Trustpilot_Reviews extends Plugin
             default:
                 return '';
         }
+    }
+
+    private function repeatData($trustBoxes) {
+        foreach ($trustBoxes as $trustbox) {
+            if (property_exists($trustbox, 'repeat') && $trustbox->repeat) {
+                return true;
+            }
+        }
+        return false;
     }
 }

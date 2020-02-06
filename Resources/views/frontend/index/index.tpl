@@ -2,11 +2,12 @@
 
 {block name="frontend_index_header_javascript_inline" append}
     {literal}
-        const trustpilot_trustbox_settings = {/literal}{$trustpilotTrustboxSettings}{literal}
+        const trustpilot_trustbox_settings = {/literal}{$trustpilotTrustboxSettings}{literal};
         dispatchEvent(new CustomEvent('trustpilotTrustboxSettingsLoaded'));
         const trustpilot_settings = {
             page: "{/literal}{$page}{literal}",
             key: "{/literal}{$integrationKey}{literal}",
+            sku: "{/literal}{$productSku}{literal}"
         };
         const createTrustBoxScript = function() {
             const trustBoxScript = document.createElement('script');

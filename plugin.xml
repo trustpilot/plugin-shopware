@@ -1,11 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/shopware/5.3/engine/Shopware/Components/Plugin/schema/plugin.xsd">
-    <label lang="en">Trustpilot-reviews</label>
-    <version>2.50.163</version>
+    <label>Trustpilot-reviews</label>
+    <label lang="de">Trustpilot-reviews</label>
+    <version>#{Octopus.Release.Number}</version>
     <copyright>2019 Trustpilot</copyright>
     <license>AFL-3.0</license>
     <link>https://trustpilot.com</link>
     <author>Trustpilot</author>
     <compatibility minVersion="5.3.0"/>
+    <changelog version="#{Octopus.Release.Number}">
+        <changes><![CDATA[
+                <ul>
+                    <li> - Trustpilot plugin automates review requests — a new order automatically triggers an invitation email to your customer. </li>
+                    <li> - Configure 'Invitation trigger' option. You will be able to configure what triggers the Invitations to be sent to your customers - when order is confirmed or when order is completed. </li>
+                    <li> - Send review invitations to your past customers. Automatically invite customers from the past 7 days up to 6 months ago. </li>
+                    <li> - Showcase your reviews - add multiple TrustBox widgets to your webshop. Drag and drop TrustBoxes for an instant preview, rearrange, customize, and publish without code changes. </li>
+                </ul>
+            ]]>
+        </changes>
+        <changes lang="de"><![CDATA[
+                <ul>
+                    <li> - Trustpilot plugin automates review requests — a new order automatically triggers an invitation email to your customer. </li>
+                    <li> - Configure 'Invitation trigger' option. You will be able to configure what triggers the Invitations to be sent to your customers - when order is confirmed or when order is completed. </li>
+                    <li> - Send review invitations to your past customers. Automatically invite customers from the past 7 days up to 6 months ago. </li>
+                    <li> - Showcase your reviews - add multiple TrustBox widgets to your webshop. Drag and drop TrustBoxes for an instant preview, rearrange, customize, and publish without code changes. </li>
+                </ul>
+            ]]>
+        </changes>
+    </changelog>
+    <description> <![CDATA[
+        <b>Trustpilot-reviews</b>
+        <p>With the Trustpilot Integration for your store, you can automatically collect reviews, integrate trust widgets into your webshop and use reviews for marketing and SEO optimization.</p>
+        ]]>
+    </description>
+    <description lang="de"><![CDATA[
+        <b>Trustpilot-reviews</b>
+        <p>Mit der Trustpilot Integration, können Sie automatisch Bewertungen sammeln, Trust-Widgets in Ihren Webshop einbinden und Bewertungen für Marketing und SEO-optimierung nutzen.</p>
+        ]]>
+    </description>
 </plugin>

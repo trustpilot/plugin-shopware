@@ -66,5 +66,13 @@
             <description lang="de">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
             <description lang="en">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
         </element>
+        <element required="false" type="text" scope="shop">
+            <name>plugin_status</name>
+            <label lang="de">Plugin status</label>
+            <label lang="en">Plugin status</label>
+            <value></value>
+            <description lang="de">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
+            <description lang="en">CAREFUL HERE! Please don’t change the information in this table as it will break the integration.</description>
+        </element>
     </elements>
 </config>

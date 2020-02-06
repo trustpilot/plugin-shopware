@@ -10,7 +10,7 @@
         {block name="content/main"}{/block}
     </div> <!-- /container -->
 
-    <script type="text/javascript" src="{link file="backend/_resources/js/integrate.js"}"></script>
+    <script type="text/javascript" src="{link file="backend/_resources/js/integrate.min.js"}"></script>
     {block name="content/javascript"}{/block}
 </body>
 </html>

@@ -12,6 +12,15 @@ use Shopware\Components\Plugin;
 
 class TrustpilotConfig
 {
+    public $settings_prefix = null;
+    public $version = null;
+    public $plugin_url = null;
+    public $apiUrl = null;
+    public $widget_script_url = null;
+    public $integration_app_url = null;
+    public $is_from_marketplace = null;
+    public $preview_shopware_url = null;
+
     protected static $instance = null;
 
     public static function getInstance()
@@ -37,12 +46,12 @@ class TrustpilotConfig
     public function getConfig($field, $tryDecode = true) {
         $repository = Shopware()->Container()->get('models')->getRepository('Shopware\Models\Shop\Shop');
         $shop = $repository->findOneBy(['active' => true]);
-        $settings = Shopware()->Container()->get('shopware.plugin.config_reader')->getByPluginName('Trustpilot', $shop);
+        $settings = Shopware()->Container()->get('shopware.plugin.config_reader')->getByPluginName('trus2_Trustpilot_Reviews', $shop);
         if (array_key_exists($field, $settings) && $settings[$field] !== '') {
             $setting = $settings[$field];
             return $tryDecode && $this->isJson($setting) ? json_decode($setting) : $setting;
         } else {
-            return $this->getDefaultConfigValues($field);
+            return $tryDecode ? json_decode($this->getDefaultConfigValues($field)) : $this->getDefaultConfigValues($field);
         }
     }
 
@@ -55,7 +64,7 @@ class TrustpilotConfig
      */
     public function writeConfig($key, $value) {
         try {
-            $plugin = Shopware()->Container()->get('shopware.plugin_manager')->getPluginByName('Trustpilot');
+            $plugin = Shopware()->Container()->get('shopware.plugin_manager')->getPluginByName('trus2_Trustpilot_Reviews');
             $modelManager = Shopware()->Container()->get('models');
             $shops = $modelManager->getRepository(\Shopware\Models\Shop\Shop::class)->findBy([]);
             $configWriter = new Plugin\ConfigWriter(Shopware()->Models());
@@ -75,18 +84,20 @@ class TrustpilotConfig
 
     private function getDefaultConfigValues($field) {
         $config = array(
-            'master_settings' => array(
-                'general' => array(
-                    'key' => '',
-                    'invitationTrigger' => 'orderConfirmed',
-                    'mappedInvitationTrigger' => array('0', '1', 'trustpilotOrderConfirmed'),
-                ),
-                'trustbox' => array('trustboxes' => array()),
-                'skuSelector' => 'none',
-                'mpnSelector' => 'none',
-                'gtinSelector' => 'none',
-                'pastOrderStatuses' => array(),
-                'productIdentificationOptions' => array('none','sku','id'),
+            'master_settings' => json_encode(
+                array(
+                    'general' => array(
+                        'key' => '',
+                        'invitationTrigger' => 'orderConfirmed',
+                        'mappedInvitationTrigger' => array('0', '1', 'trustpilotOrderConfirmed'),
+                    ),
+                    'trustbox' => array('trustboxes' => array()),
+                    'skuSelector' => 'none',
+                    'mpnSelector' => 'none',
+                    'gtinSelector' => 'none',
+                    'pastOrderStatuses' => array(),
+                    'productIdentificationOptions' => array('none', 'number', 'ean', 'supplierNumber'),
+                )
             ),
             'sync_in_progress' => 'false',
             'show_past_orders_initial' => 'true',
@@ -95,6 +106,12 @@ class TrustpilotConfig
             'custom_trustboxes' => '{}',
             'page_urls' => '{}',
             'total_orders' => 0,
+            'plugin_status' => json_encode(
+                array(
+                    'pluginStatus' => 200,
+                    'blockedDomains' => array(),
+                )
+            ),
         );
         if (array_key_exists($field, $config)) {
             return $config[$field];
